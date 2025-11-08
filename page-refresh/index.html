@@ -1,0 +1,151 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Auto-Refresh Page</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 50px auto;
+            padding: 20px;
+            background-color: #f5f5f5;
+        }
+        .container {
+            background-color: white;
+            padding: 30px;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        h1 {
+            color: #333;
+        }
+        .info {
+            background-color: #e8f4f8;
+            border-left: 4px solid #2196F3;
+            padding: 15px;
+            margin: 20px 0;
+        }
+        .status {
+            font-weight: bold;
+            color: #2196F3;
+        }
+        .time {
+            font-family: monospace;
+            font-size: 1.2em;
+            color: #666;
+        }
+        .examples {
+            background-color: #fff9e6;
+            border-left: 4px solid #ff9800;
+            padding: 15px;
+            margin: 20px 0;
+        }
+        code {
+            background-color: #f4f4f4;
+            padding: 2px 6px;
+            border-radius: 3px;
+            font-family: monospace;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Auto-Refresh Test Page</h1>
+        
+        <div class="info">
+            <p class="status" id="status">Initializing...</p>
+            <p>Current Time: <span class="time" id="currentTime"></span></p>
+            <p>Page Loaded: <span class="time" id="loadTime"></span></p>
+        </div>
+
+        <div class="examples">
+            <h3>Usage Examples:</h3>
+            <ul>
+                <li>Refresh every 5 seconds: <code>?refresh_every=5</code></li>
+                <li>Refresh at 2:30 PM: <code>?refresh_at=1430</code></li>
+                <li>No refresh: <code>(no query parameters)</code></li>
+            </ul>
+        </div>
+    </div>
+
+    <script>
+        // Update current time display every second
+        function updateCurrentTime() {
+            const now = new Date();
+            document.getElementById('currentTime').textContent = now.toLocaleTimeString();
+        }
+        
+        // Display page load time
+        const loadTime = new Date();
+        document.getElementById('loadTime').textContent = loadTime.toLocaleTimeString();
+        updateCurrentTime();
+        setInterval(updateCurrentTime, 1000);
+
+        // Parse query string parameters
+        function getQueryParam(param) {
+            const urlParams = new URLSearchParams(window.location.search);
+            return urlParams.get(param);
+        }
+
+        const refreshEvery = getQueryParam('refresh_every');
+        const refreshAt = getQueryParam('refresh_at');
+
+        // Handle refresh_every parameter
+        if (refreshEvery) {
+            const seconds = parseInt(refreshEvery);
+            if (!isNaN(seconds) && seconds > 0) {
+                document.getElementById('status').textContent = 
+                    `Auto-refresh enabled: Page will refresh every ${seconds} seconds`;
+                
+                setTimeout(() => {
+                    window.location.reload();
+                }, seconds * 1000);
+            } else {
+                document.getElementById('status').textContent = 
+                    'Invalid refresh_every parameter (must be a positive number)';
+            }
+        }
+        // Handle refresh_at parameter
+        else if (refreshAt) {
+            const timeStr = refreshAt.toString();
+            if (timeStr.length === 4) {
+                const hours = parseInt(timeStr.substring(0, 2));
+                const minutes = parseInt(timeStr.substring(2, 4));
+                
+                if (hours >= 0 && hours < 24 && minutes >= 0 && minutes < 60) {
+                    const now = new Date();
+                    const targetTime = new Date();
+                    targetTime.setHours(hours, minutes, 0, 0);
+                    
+                    // If target time is in the past today, set it for tomorrow
+                    if (targetTime <= now) {
+                        targetTime.setDate(targetTime.getDate() + 1);
+                    }
+                    
+                    const timeUntilRefresh = targetTime - now;
+                    
+                    document.getElementById('status').textContent = 
+                        `Auto-refresh enabled: Page will refresh at ${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}:00`;
+                    
+                    setTimeout(() => {
+                        window.location.reload();
+                    }, timeUntilRefresh);
+                } else {
+                    document.getElementById('status').textContent = 
+                        'Invalid refresh_at parameter (format should be hhmm, e.g., 1430 for 2:30 PM)';
+                }
+            } else {
+                document.getElementById('status').textContent = 
+                    'Invalid refresh_at parameter (format should be hhmm, e.g., 1430 for 2:30 PM)';
+            }
+        }
+        // No refresh parameters
+        else {
+            document.getElementById('status').textContent = 
+                'No refresh parameters detected - page will not auto-refresh';
+        }
+    </script>
+</body>
+</html>
