@@ -49,6 +49,7 @@
             font-family: monospace;
         }
     </style>
+    <script src="page-refresh.js"></script>
 </head>
 <body>
     <div class="container">
@@ -65,6 +66,7 @@
             <ul>
                 <li>Refresh every 5 seconds: <code>?refresh_every=5</code></li>
                 <li>Refresh at 2:30 PM: <code>?refresh_at=1430</code></li>
+                <li>Both simultaneously: <code>?refresh_every=10&refresh_at=1430</code></li>
                 <li>No refresh: <code>(no query parameters)</code></li>
             </ul>
         </div>
@@ -83,68 +85,14 @@
         updateCurrentTime();
         setInterval(updateCurrentTime, 1000);
 
-        // Parse query string parameters
-        function getQueryParam(param) {
-            const urlParams = new URLSearchParams(window.location.search);
-            return urlParams.get(param);
-        }
-
-        const refreshEvery = getQueryParam('refresh_every');
-        const refreshAt = getQueryParam('refresh_at');
-
-        // Handle refresh_every parameter
-        if (refreshEvery) {
-            const seconds = parseInt(refreshEvery);
-            if (!isNaN(seconds) && seconds > 0) {
-                document.getElementById('status').textContent = 
-                    `Auto-refresh enabled: Page will refresh every ${seconds} seconds`;
-                
-                setTimeout(() => {
-                    window.location.reload();
-                }, seconds * 1000);
-            } else {
-                document.getElementById('status').textContent = 
-                    'Invalid refresh_every parameter (must be a positive number)';
-            }
-        }
-        // Handle refresh_at parameter
-        else if (refreshAt) {
-            const timeStr = refreshAt.toString();
-            if (timeStr.length === 4) {
-                const hours = parseInt(timeStr.substring(0, 2));
-                const minutes = parseInt(timeStr.substring(2, 4));
-                
-                if (hours >= 0 && hours < 24 && minutes >= 0 && minutes < 60) {
-                    const now = new Date();
-                    const targetTime = new Date();
-                    targetTime.setHours(hours, minutes, 0, 0);
-                    
-                    // If target time is in the past today, set it for tomorrow
-                    if (targetTime <= now) {
-                        targetTime.setDate(targetTime.getDate() + 1);
-                    }
-                    
-                    const timeUntilRefresh = targetTime - now;
-                    
-                    document.getElementById('status').textContent = 
-                        `Auto-refresh enabled: Page will refresh at ${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}:00`;
-                    
-                    setTimeout(() => {
-                        window.location.reload();
-                    }, timeUntilRefresh);
-                } else {
-                    document.getElementById('status').textContent = 
-                        'Invalid refresh_at parameter (format should be hhmm, e.g., 1430 for 2:30 PM)';
-                }
-            } else {
-                document.getElementById('status').textContent = 
-                    'Invalid refresh_at parameter (format should be hhmm, e.g., 1430 for 2:30 PM)';
-            }
-        }
-        // No refresh parameters
-        else {
-            document.getElementById('status').textContent = 
-                'No refresh parameters detected - page will not auto-refresh';
+        // Initialize page refresh functionality
+        const pageRefresh = new PageRefresh();
+        const config = pageRefresh.init();
+        
+        // Update status with all messages
+        const statusElement = document.getElementById('status');
+        if (config.statusMessages.length > 0) {
+            statusElement.innerHTML = config.statusMessages.join('<br>');
         }
     </script>
 </body>
